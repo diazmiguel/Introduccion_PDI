@@ -1,28 +1,28 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import tkinter as tk
+import imageio
 from tkinter import filedialog
 from tkinter import simpledialog
-import imageio
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # Crear ventana principal
 ventana = tk.Tk()
-ventana.geometry("850x600")
+ventana.geometry("900x600")
 ventana.title("IPDI")
 ventana.config(bg="#333333") 
 
 # Crear figura de Matplotlib para mostrar la imagen en el cuadro izquierdo
-fig1, ax1 = plt.subplots(figsize=(3.5, 3.5))  # Tamaño de la figura similar al canvas
+fig1, ax1 = plt.subplots(figsize=(4, 4))  # Tamaño de la figura similar al canvas
 ax1.axis('off') 
 canvas1 = FigureCanvasTkAgg(fig1, master=ventana)  # Crear el canvas de Matplotlib
-canvas1.get_tk_widget().place(x=50, y=50)  # Posicionar el canvas de Matplotlib en la ventana
+canvas1.get_tk_widget().place(x=40, y=50)  # Posicionar el canvas de Matplotlib en la ventana
 
 # Crear figura de Matplotlib para mostrar la imagen en el cuadro derecho
-fig2, ax2 = plt.subplots(figsize=(3.5, 3.5))  # Tamaño de la figura similar al canvas
+fig2, ax2 = plt.subplots(figsize=(4, 4))  # Tamaño de la figura similar al canvas
 ax2.axis('off') 
 canvas2 = FigureCanvasTkAgg(fig2, master=ventana)  # Crear el canvas de Matplotlib
-canvas2.get_tk_widget().place(x=450, y=50)  # Posicionar el canvas de Matplotlib en la ventana
+canvas2.get_tk_widget().place(x=460, y=50)  # Posicionar el canvas de Matplotlib en la ventana
 
 # Configuracion que evita el fondo blanco por matplotlib
 fig1.subplots_adjust(left=0, right=1, top=1, bottom=0)
@@ -31,7 +31,6 @@ fig2.subplots_adjust(left=0, right=1, top=1, bottom=0)
 # Variables para guardar las imágenes
 imagen_inicio = None # imagen que mostrara al principio
 imagen_final = None # imagen que mostrara al final
-imagen = None #imagen con la que trabajaremos
 
 #FUNCIONES PARA TRABAJAR CON ELLAS (Deberia modularizarse)
 def rgb2yiq(imagen):
@@ -55,6 +54,7 @@ def yiq2rgb(imagen):
     rgb[:,:,1] = np.clip(imagen[:,:,0] - 0.2721 * imagen[:,:,1] - 0.6474 * imagen[:,:,2], 0., 1.)
     rgb[:,:,2] = np.clip(imagen[:,:,0] - 1.1070 * imagen[:,:,1] + 1.7046 * imagen[:,:,2], 0., 1.)
     return rgb
+
 def preguntar_luminosidad():
     luminancia = simpledialog.askfloat("Entrada", "Ingrese el valor de luminancia:")
     saturacion = simpledialog.askfloat("Entrada", "Ingrese el valor de saturacion:")
@@ -135,22 +135,22 @@ def guardar_imagen():
 
 # Crear botones 
 boton_abrir = tk.Button(ventana, text="Abrir", command= abrir_imagen, bg="#1dd767", font=("Roboto", 11))
-boton_abrir.place(x=200, y=450)
+boton_abrir.place(x=200, y=500)
 
 boton_transformar = tk.Button(ventana, text="Transformar a YIQ", command=transformar_a_yiq, bg="#1dd767",font=("Roboto", 11))
-boton_transformar.place(x=300, y=450)
-
-boton_guardar = tk.Button(ventana, text="Guardar", command=guardar_imagen, bg="#1dd767",font=("Roboto", 11))
-boton_guardar.place(x=500, y=450)
-
-boton_volver = tk.Button(ventana, text="Volver", command=volver, bg="#1dd767",font=("Roboto", 11))
-boton_volver.place(x=200, y=500)
-
-boton_transformar = tk.Button(ventana, text="Transformar a RGB", command=transformar_a_rgb, bg="#1dd767",font=("Roboto", 11))
 boton_transformar.place(x=300, y=500)
 
+boton_guardar = tk.Button(ventana, text="Guardar", command=guardar_imagen, bg="#1dd767",font=("Roboto", 11))
+boton_guardar.place(x=500, y=500)
+
+boton_volver = tk.Button(ventana, text="Volver", command=volver, bg="#1dd767",font=("Roboto", 11))
+boton_volver.place(x=200, y=550)
+
+boton_transformar = tk.Button(ventana, text="Transformar a RGB", command=transformar_a_rgb, bg="#1dd767",font=("Roboto", 11))
+boton_transformar.place(x=300, y=550)
+
 boton_luminancia = tk.Button(ventana, text="Luminancia", command=luminancia, bg="#1dd767",font=("Roboto", 11))
-boton_luminancia.place(x=500, y=500)
+boton_luminancia.place(x=500, y=550)
 
 # Iniciar el loop de la ventana
 ventana.mainloop()
