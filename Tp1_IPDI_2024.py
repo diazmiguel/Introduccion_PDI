@@ -41,8 +41,7 @@ def rgb2yiq(imagen):
     yiq[:,:,0] = np.clip(0.299 * imagen[:,:,0] + 0.587 * imagen[:,:,1] + 0.114 * imagen[:,:,2], 0., 1.)
     yiq[:,:,1] = np.clip(0.595716 * imagen[:,:,0] - 0.274453 * imagen[:,:,1] - 0.321263 * imagen[:,:,2], -0.5957, 0.5957)
     yiq[:,:,2] = np.clip(0.211456 * imagen[:,:,0] - 0.522591 * imagen[:,:,1] + 0.311135 * imagen[:,:,2], -0.5226, 0.5226)
-    luminancia = 0.4
-    saturacion = 0.6
+    luminancia, saturacion = preguntar_luminosidad()
     yiq[:,:,0] *=luminancia
     yiq[:,:,1] *=saturacion
     yiq[:,:,2] *=saturacion
@@ -88,11 +87,9 @@ def transformar_a_yiq():
 
 def transformar_a_rgb():
     global imagen_inicio, imagen_final
-    if imagen_inicio:
+    if imagen_inicio is not None:
         # Transformar la imagen Aqui
         imagen_final = yiq2rgb(imagen_inicio)
-        print(imagen_final)
-        # Mostrar la imagen en el canvas derecho utilizando Matplotlib
         ax2.clear()  # Limpiar el contenido anterior de la figura
         ax2.imshow(imagen_final)  # Mostrar la imagen
         ax2.axis('off')  # Ocultar los ejes
@@ -149,7 +146,7 @@ boton_guardar.place(x=500, y=450)
 boton_volver = tk.Button(ventana, text="Volver", command=volver, bg="#1dd767",font=("Roboto", 11))
 boton_volver.place(x=200, y=500)
 
-boton_transformar = tk.Button(ventana, text="Transformar a RGB", command=transformar_a_yiq, bg="#1dd767",font=("Roboto", 11))
+boton_transformar = tk.Button(ventana, text="Transformar a RGB", command=transformar_a_rgb, bg="#1dd767",font=("Roboto", 11))
 boton_transformar.place(x=300, y=500)
 
 boton_luminancia = tk.Button(ventana, text="Luminancia", command=luminancia, bg="#1dd767",font=("Roboto", 11))
