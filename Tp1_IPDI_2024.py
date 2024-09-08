@@ -74,10 +74,9 @@ def abrir_imagen():
         canvas1.draw()  # Dibujar la imagen en el canvas de Matplotlib
 
 # Función para transformar la imagen de RGB a YIQ
-def transformar_a_yiq(dato1,dato2):
+def transformar_a_yiq():
     global imagen_inicio, imagen_final
     if imagen_inicio is not None:
-        print(dato1,dato2)
         # Transformar la imagen
         imagen_final = rgb2yiq(imagen_inicio)
         imagen_final = (imagen_final * 255).astype(np.uint8)
