@@ -18,7 +18,7 @@ ax1.axis('off')
 canvas1 = FigureCanvasTkAgg(fig1, master=ventana)  # Crear el canvas de Matplotlib
 canvas1.get_tk_widget().place(x=40, y=50)  # Posicionar el canvas de Matplotlib en la ventana
 
-# Crear figura de Matplotlib para mostrar la imagen en el cuadro derecho
+# Crear figura de Matplotlib para mostrar una suma 
 fig2, ax2 = plt.subplots(figsize=(4, 4))  # Tamaño de la figura similar al canvas
 ax2.axis('off') 
 canvas2 = FigureCanvasTkAgg(fig2, master=ventana)  # Crear el canvas de Matplotlib
@@ -33,18 +33,14 @@ imagen_inicio = None # imagen que mostrara al principio
 imagen_final = None # imagen que mostrara al final
 
 #FUNCIONES PARA TRABAJAR CON ELLAS (Deberia modularizarse)
-def rgb2yiq(imagen, luminancia =1, saturacion=1):
+def rgb2yiq(imagen):
     imagen = np.clip(imagen/255.,0.,1.) # imagen = imagen/255.
     #print("rgb2yiq: ",imagen.shape,imagen.dtype, "tamaño: ", imagen.min(),imagen.max())
     yiq= np.zeros(imagen.shape)
     yiq[:,:,0] = np.clip(0.299 * imagen[:,:,0] + 0.587 * imagen[:,:,1] + 0.114 * imagen[:,:,2], 0., 1.)
     yiq[:,:,1] = np.clip(0.595716 * imagen[:,:,0] - 0.274453 * imagen[:,:,1] - 0.321263 * imagen[:,:,2], -0.5957, 0.5957)
     yiq[:,:,2] = np.clip(0.211456 * imagen[:,:,0] - 0.522591 * imagen[:,:,1] + 0.311135 * imagen[:,:,2], -0.5226, 0.5226)
-    yiq[:,:,0] *=luminancia
-    yiq[:,:,1] *=saturacion
-    yiq[:,:,2] *=saturacion
-    yiq_normalized = (yiq - yiq.min()) / (yiq.max() - yiq.min())
-    return yiq_normalized 
+    return yiq
 
 def yiq2rgb(imagen):
     imagen = np.clip(imagen/255.,0.,1.) #imagen /255.
@@ -53,11 +49,6 @@ def yiq2rgb(imagen):
     rgb[:,:,1] = np.clip(imagen[:,:,0] - 0.2721 * imagen[:,:,1] - 0.6474 * imagen[:,:,2], 0., 1.)
     rgb[:,:,2] = np.clip(imagen[:,:,0] - 1.1070 * imagen[:,:,1] + 1.7046 * imagen[:,:,2], 0., 1.)
     return rgb
-
-def cuasi_suma_rgb(imagen_inicio, imagen_final):
-    im = np.clip(imagen_inicio + imagen_final, 0, 255).astype(np.uint8)
-    plt.imshow(im)
-    plt.show()
 
 # FUNCIONES DE INTERFAZ (Tambien deberia modularizarse)
 def abrir_imagen():
@@ -78,8 +69,13 @@ def transformar_a_yiq():
         # Transformar la imagen
         luminancia = simpledialog.askfloat("Entrada", "Ingrese el valor de luminancia:") 
         saturacion = simpledialog.askfloat("Entrada", "Ingrese el valor de saturacion:")
-        imagen_final = rgb2yiq(imagen_inicio,luminancia, saturacion)
-        imagen_final = (imagen_final * 255).astype(np.uint8)
+        yiq = rgb2yiq(imagen_inicio)
+        yiq[:,:,0] *=luminancia
+        yiq[:,:,1] *=saturacion
+        yiq[:,:,2] *=saturacion
+        yiq_normalized = (yiq - yiq.min()) / (yiq.max() - yiq.min())
+        imagen_final = (yiq_normalized * 255).astype(np.uint8)
+        #imagen_final= np.clip(imagen_final*255,0,255).astype(np.uint8) No sirve
         # Mostrar la imagen en el canvas derecho utilizando Matplotlib
         ax2.clear()  # Limpiar el contenido anterior de la figura
         ax2.imshow(imagen_final)  # Mostrar la imagen
@@ -90,7 +86,9 @@ def transformar_a_rgb():
     global imagen_inicio, imagen_final
     if imagen_inicio is not None:
         # Transformar la imagen Aqui
-        imagen_final = yiq2rgb(imagen_inicio)
+        rgb = yiq2rgb(imagen_inicio)
+        imagen_final = (rgb * 255).astype(np.uint8)
+        #print(imagen_final.dtype)
         ax2.clear()  # Limpiar el contenido anterior de la figura
         ax2.imshow(imagen_final)  # Mostrar la imagen
         ax2.axis('off')  # Ocultar los ejes
@@ -112,20 +110,86 @@ def oscurecer_imagen():
         ax2.axis('off')  # Ocultar los ejes
         canvas2.draw()  # Dibujar la imagen en el canvas de Matplotlib
 
-def suma_clampeada():
-    global imagen_inicio, imagen_final
+def cargar2daImagen():
     ruta = filedialog.askopenfilename(defaultextension=".png", filetypes=[("Image files", "*.png ; *.bmp ; *.jpg")])
     if ruta:
-        imagen_final = imageio.v2.imread(ruta)  #Reemplazar por lectura de imageio
-        # Mostrar la imagen en el canvas derecho utilizando Matplotlib
-        ax2.clear()  # Limpiar el contenido anterior de la figura
-        ax2.imshow(imagen_final)  # Mostrar la imagen
-        ax2.axis('off')  # Ocultar los ejes
-        canvas2.draw()  # Dibujar la imagen en el canvas de Matplotlib
-        #sumita
-        cuasi_suma_rgb(imagen_inicio, imagen_final)
+        imagen2da = imageio.v2.imread(ruta)  #Reemplazar por lectura de imageio
+        return imagen2da
 
+def pintar2Canvas(img):
+    global imagen_final
+    imagen_final = img
+    ax2.clear();  # Limpiar el contenido anterior de la figura
+    ax2.imshow(imagen_final);  # Mostrar la imagen
+    ax2.axis('off');  # Ocultar los ejes
+    canvas2.draw();  # Dibujar la imagen en el canvas de Matplotlib
+
+def cuasi_suma_clampeada():
+    global imagen_inicio
+    img2 = cargar2daImagen()
+    if img2 is not None:
+        sumaImg = np.clip(imagen_inicio+img2,0,255) #Operacion que sumara las matrices
+        # Mostrar la imagen en el canvas derecho utilizando Matplotlib
+        pintar2Canvas(sumaImg)
         
+def cuasi_suma_promediada():
+    global imagen_inicio
+    img2 = cargar2daImagen()
+    if img2 is not None:
+        sumaImg = (imagen_inicio+img2) //2
+        # Mostrar la imagen en el canvas derecho utilizando Matplotlib
+        pintar2Canvas(sumaImg)       
+
+def cuasi_resta_clampeada():
+    global imagen_inicio
+    img2 = cargar2daImagen()
+    if img2 is not None:
+        print("img2")
+        restaImg = np.clip(imagen_inicio - img2,0,255) #Operacion que restara las matrices
+        # Mostrar la imagen en el canvas derecho utilizando Matplotlib
+        #print(restaImg)
+        pintar2Canvas(restaImg)
+        
+def cuasi_resta_promediada():
+    global imagen_inicio
+    img2 = cargar2daImagen()
+    if img2 is not None:
+        restaImg = (imagen_inicio - img2) //2
+        # Mostrar la imagen en el canvas derecho utilizando Matplotlib
+        pintar2Canvas(restaImg)  
+        
+def suma_clampeada_yiq():
+    global imagen_inicio
+    img2 = cargar2daImagen()
+    if img2 is not None:
+        #Obtenemos YIQ
+        img1 = rgb2yiq(imagen_inicio)
+        img2 = rgb2yiq(img2)
+        yiq= np.zeros(img1.shape)
+        yiq[:,:,0] = np.clip(img1[:,:,0]+img2[:,:,0], 0.,1.)# YA + YB; If YC > 1 then YC:=1
+        yiq[:,:,1] = (img1[:,:,0]*img1[:,:,1] + img2[:,:,0]*img2[:,:,1]) / (img1[:,:,0]+img2[:,:,0]) #(YA * IA + YB * IB) / (YA + YB)
+        yiq[:,:,2] = (img1[:,:,0]*img1[:,:,2] + img2[:,:,0]*img2[:,:,2]) / (img1[:,:,0]+img2[:,:,0])  #(YA * QA + YB * QB) / (YA + YB)
+        # Mostrar la imagen en el canvas derecho utilizando Matplotlib
+        sumaImg = (yiq - yiq.min()) / (yiq.max() - yiq.min())
+        sumaImg = (sumaImg * 255).astype(np.uint8)
+        pintar2Canvas(sumaImg)
+
+def resta_clampeada_yiq():
+    global imagen_inicio
+    img2 = cargar2daImagen()
+    if img2 is not None:
+        #Obtenemos YIQ
+        img1 = rgb2yiq(imagen_inicio)
+        img2 = rgb2yiq(img2)
+        yiq= np.zeros(img1.shape)
+        yiq[:,:,0] = np.clip(img1[:,:,0]-img2[:,:,0], 0.,1.)# YA - YB; If YC > 1 then YC:=1
+        yiq[:,:,1] = (img1[:,:,0]*img1[:,:,1] - img2[:,:,0]*img2[:,:,1]) / (img1[:,:,0]+img2[:,:,0]) #(YA * IA - YB * IB) / (YA + YB)
+        yiq[:,:,2] = (img1[:,:,0]*img1[:,:,2] - img2[:,:,0]*img2[:,:,2]) / (img1[:,:,0]+img2[:,:,0])  #(YA * QA - YB * QB) / (YA + YB)
+        # Mostrar la imagen en el canvas derecho utilizando Matplotlib
+        sumaImg = (yiq - yiq.min()) / (yiq.max() - yiq.min())
+        sumaImg = (sumaImg * 255).astype(np.uint8)
+        pintar2Canvas(sumaImg)
+
 def ejecutar_opcion():
     funcion_seleccionada = operaciones[opcion.get()]
     funcion_seleccionada()
@@ -149,14 +213,19 @@ def guardar_imagen():
             
 # Diccionario de funciones
 operaciones = {
-    "   Transformar a YIQ": transformar_a_yiq,
-    "   Transformar a RGB": transformar_a_rgb,
-    "   Oscurecer imagen ": oscurecer_imagen,
-    "   Sumar una imagen ": suma_clampeada
+    "   Transformar a YIQ ": transformar_a_yiq,
+    "   Transformar a RGB ": transformar_a_rgb,
+    "   Oscurecer imagen  ": oscurecer_imagen,
+    " Suma clampeada RGB  ": cuasi_suma_clampeada,
+    " Suma promediada RGB ":cuasi_suma_promediada,
+    " Resta clampeada RGB ": cuasi_resta_clampeada,
+    " Resta promediada RGB":cuasi_resta_promediada,
+    " Suma clampeada YIQ  ":suma_clampeada_yiq,
+    " Resta clampeada YIQ ":resta_clampeada_yiq
 }
 # Variable para almacenar la opción seleccionada
 opcion = tk.StringVar()
-opcion.set("   Transformar a YIQ")  # Valor inicial
+opcion.set("   Transformar a YIQ ")  # Valor inicial
 
 # Crear botones 
 boton_abrir = tk.Button(ventana, text="Abrir ", command= abrir_imagen, bg="#1dd767", font=("Roboto", 11))
