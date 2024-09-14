@@ -8,21 +8,21 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # Crear ventana principal
 ventana = tk.Tk()
-ventana.geometry("900x600")
+ventana.geometry("1000x600")
 ventana.title("IPDI")
 ventana.config(bg="#333333") 
 
 # Crear figura de Matplotlib para mostrar la imagen en el cuadro izquierdo
-fig1, ax1 = plt.subplots(figsize=(4, 4))  # Tamaño de la figura similar al canvas
+fig1, ax1 = plt.subplots(figsize=(4.5, 4))  # Tamaño de la figura similar al canvas
 ax1.axis('off') 
 canvas1 = FigureCanvasTkAgg(fig1, master=ventana)  # Crear el canvas de Matplotlib
 canvas1.get_tk_widget().place(x=40, y=50)  # Posicionar el canvas de Matplotlib en la ventana
 
 # Crear figura de Matplotlib para mostrar una suma 
-fig2, ax2 = plt.subplots(figsize=(4, 4))  # Tamaño de la figura similar al canvas
+fig2, ax2 = plt.subplots(figsize=(4.5, 4))  # Tamaño de la figura similar al canvas
 ax2.axis('off') 
 canvas2 = FigureCanvasTkAgg(fig2, master=ventana)  # Crear el canvas de Matplotlib
-canvas2.get_tk_widget().place(x=460, y=50)  # Posicionar el canvas de Matplotlib en la ventana
+canvas2.get_tk_widget().place(x=510, y=50)  # Posicionar el canvas de Matplotlib en la ventana
 
 # Configuracion que evita el fondo blanco por matplotlib
 fig1.subplots_adjust(left=0, right=1, top=1, bottom=0)
@@ -43,7 +43,7 @@ def rgb2yiq(imagen):
     return yiq
 
 def yiq2rgb(imagen):
-    imagen = np.clip(imagen/255.,0.,1.) #imagen /255.
+    #imagen = np.clip(imagen/255.,0.,1.)
     rgb = np.zeros(imagen.shape)
     rgb[:,:,0] = np.clip(imagen[:,:,0] + 0.9663 * imagen[:,:,1] + 0.6210 * imagen[:,:,2], 0., 1.)
     rgb[:,:,1] = np.clip(imagen[:,:,0] - 0.2721 * imagen[:,:,1] - 0.6474 * imagen[:,:,2], 0., 1.)
@@ -75,7 +75,6 @@ def transformar_a_yiq():
         yiq[:,:,2] *=saturacion
         yiq_normalized = (yiq - yiq.min()) / (yiq.max() - yiq.min())
         imagen_final = (yiq_normalized * 255).astype(np.uint8)
-        #imagen_final= np.clip(imagen_final*255,0,255).astype(np.uint8) No sirve
         # Mostrar la imagen en el canvas derecho utilizando Matplotlib
         ax2.clear()  # Limpiar el contenido anterior de la figura
         ax2.imshow(imagen_final)  # Mostrar la imagen
@@ -86,7 +85,7 @@ def transformar_a_rgb():
     global imagen_inicio, imagen_final
     if imagen_inicio is not None:
         # Transformar la imagen Aqui
-        rgb = yiq2rgb(imagen_inicio)
+        rgb = yiq2rgb(imagen_inicio/255.)
         imagen_final = (rgb * 255).astype(np.uint8)
         #print(imagen_final.dtype)
         ax2.clear()  # Limpiar el contenido anterior de la figura
@@ -95,16 +94,18 @@ def transformar_a_rgb():
         canvas2.draw()  # Dibujar la imagen en el canvas de Matplotlib
 
 
-def oscurecer_imagen():
+def cambiarLuminanciaSaturacion():
     global imagen_inicio, imagen_final
     if imagen_inicio is not None:
-        valorOscurecer= simpledialog.askfloat("Entrada", "Ingrese valor para Oscurecer la imagen:") 
-        if imagen_final is not None:
-            imagen_final = imagen_final / 255.0 #normalizo los valores
-        else:
-            imagen_final = imagen_inicio / 255.0 #normalizo los valores
-        imagen_final= imagen_final * valorOscurecer
-        imagen_final = (imagen_final * 255).astype(np.uint8)
+        # Transformar la imagen
+        luminancia = simpledialog.askfloat("Entrada", "Ingrese el valor de luminancia:") 
+        saturacion = simpledialog.askfloat("Entrada", "Ingrese el valor de saturacion:")
+        yiq = rgb2yiq(imagen_inicio)
+        yiq[:,:,0] *=luminancia
+        yiq[:,:,1] *=saturacion
+        yiq[:,:,2] *=saturacion
+        imagen_final = (yiq2rgb(yiq) * 255).astype(np.uint8)
+        # Mostrar la imagen en el canvas derecho utilizando Matplotlib
         ax2.clear()  # Limpiar el contenido anterior de la figura
         ax2.imshow(imagen_final)  # Mostrar la imagen
         ax2.axis('off')  # Ocultar los ejes
@@ -170,8 +171,7 @@ def suma_clampeada_yiq():
         yiq[:,:,1] = (img1[:,:,0]*img1[:,:,1] + img2[:,:,0]*img2[:,:,1]) / (img1[:,:,0]+img2[:,:,0]) #(YA * IA + YB * IB) / (YA + YB)
         yiq[:,:,2] = (img1[:,:,0]*img1[:,:,2] + img2[:,:,0]*img2[:,:,2]) / (img1[:,:,0]+img2[:,:,0])  #(YA * QA + YB * QB) / (YA + YB)
         # Mostrar la imagen en el canvas derecho utilizando Matplotlib
-        sumaImg = (yiq - yiq.min()) / (yiq.max() - yiq.min())
-        sumaImg = (sumaImg * 255).astype(np.uint8)
+        sumaImg = (yiq2rgb(yiq) * 255).astype(np.uint8)
         pintar2Canvas(sumaImg)
 
 def resta_clampeada_yiq():
@@ -186,8 +186,37 @@ def resta_clampeada_yiq():
         yiq[:,:,1] = (img1[:,:,0]*img1[:,:,1] - img2[:,:,0]*img2[:,:,1]) / (img1[:,:,0]+img2[:,:,0]) #(YA * IA - YB * IB) / (YA + YB)
         yiq[:,:,2] = (img1[:,:,0]*img1[:,:,2] - img2[:,:,0]*img2[:,:,2]) / (img1[:,:,0]+img2[:,:,0])  #(YA * QA - YB * QB) / (YA + YB)
         # Mostrar la imagen en el canvas derecho utilizando Matplotlib
-        sumaImg = (yiq - yiq.min()) / (yiq.max() - yiq.min())
-        sumaImg = (sumaImg * 255).astype(np.uint8)
+        sumaImg = sumaImg = (yiq2rgb(yiq) * 255).astype(np.uint8)
+        pintar2Canvas(sumaImg)
+
+def suma_promediada_yiq():
+    global imagen_inicio
+    img2 = cargar2daImagen()
+    if img2 is not None:
+        #Obtenemos YIQ
+        img1 = rgb2yiq(imagen_inicio)
+        img2 = rgb2yiq(img2)
+        yiq= np.zeros(img1.shape)
+        yiq[:,:,0] = np.clip((img1[:,:,0]+img2[:,:,0])/2, 0.,1.)# YA + YB; If YC > 1 then YC:=1
+        yiq[:,:,1] = (img1[:,:,0]*img1[:,:,1] + img2[:,:,0]*img2[:,:,1]) / (img1[:,:,0]+img2[:,:,0]) #(YA * IA + YB * IB) / (YA + YB)
+        yiq[:,:,2] = (img1[:,:,0]*img1[:,:,2] + img2[:,:,0]*img2[:,:,2]) / (img1[:,:,0]+img2[:,:,0])  #(YA * QA + YB * QB) / (YA + YB)
+        # Mostrar la imagen en el canvas derecho utilizando Matplotlib
+        sumaImg = (yiq2rgb(yiq) * 255).astype(np.uint8)
+        pintar2Canvas(sumaImg)
+
+def resta_promediada_yiq():
+    global imagen_inicio
+    img2 = cargar2daImagen()
+    if img2 is not None:
+        #Obtenemos YIQ
+        img1 = rgb2yiq(imagen_inicio)
+        img2 = rgb2yiq(img2)
+        yiq= np.zeros(img1.shape)
+        yiq[:,:,0] = np.clip((img1[:,:,0]-img2[:,:,0])/2, 0.,1.)# YA - YB; If YC > 1 then YC:=1
+        yiq[:,:,1] = (img1[:,:,0]*img1[:,:,1] - img2[:,:,0]*img2[:,:,1]) / (img1[:,:,0]+img2[:,:,0]) #(YA * IA - YB * IB) / (YA + YB)
+        yiq[:,:,2] = (img1[:,:,0]*img1[:,:,2] - img2[:,:,0]*img2[:,:,2]) / (img1[:,:,0]+img2[:,:,0])  #(YA * QA - YB * QB) / (YA + YB)
+        # Mostrar la imagen en el canvas derecho utilizando Matplotlib
+        sumaImg = sumaImg = (yiq2rgb(yiq) * 255).astype(np.uint8)
         pintar2Canvas(sumaImg)
 
 def ejecutar_opcion():
@@ -215,13 +244,15 @@ def guardar_imagen():
 operaciones = {
     "   Transformar a YIQ ": transformar_a_yiq,
     "   Transformar a RGB ": transformar_a_rgb,
-    "   Oscurecer imagen  ": oscurecer_imagen,
+    "   Manipular Y o IQ  ": cambiarLuminanciaSaturacion,
     " Suma clampeada RGB  ": cuasi_suma_clampeada,
     " Suma promediada RGB ":cuasi_suma_promediada,
     " Resta clampeada RGB ": cuasi_resta_clampeada,
     " Resta promediada RGB":cuasi_resta_promediada,
     " Suma clampeada YIQ  ":suma_clampeada_yiq,
-    " Resta clampeada YIQ ":resta_clampeada_yiq
+    " Resta clampeada YIQ ":resta_clampeada_yiq,
+    " Suma promediada YIQ ":suma_promediada_yiq,
+    " Resta promediada YIQ":resta_promediada_yiq
 }
 # Variable para almacenar la opción seleccionada
 opcion = tk.StringVar()
@@ -243,7 +274,7 @@ boton_volver.place(x=200, y=550)
 
 # Crear el botón y vincularlo a la función de solicitud de datos
 boton_ejecutar = tk.Button(ventana, text="Ejecutar Operación", command=ejecutar_opcion, bg="#1dd767", font=("Roboto", 11))
-boton_ejecutar.place(x=300, y=550)
+boton_ejecutar.place(x=500, y=550)
 
 # Iniciar el loop de la ventana
 ventana.mainloop()
