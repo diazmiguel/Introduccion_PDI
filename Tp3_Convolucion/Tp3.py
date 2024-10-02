@@ -211,18 +211,14 @@ def convolucionar(img, kernel):
         for y in range(imgConvolucionada.shape[1]):
             imgConvolucionada[x,y] = (img[x:x+kernel.shape[0],y:y+kernel.shape[1]]*kernel).sum() 
     return imgConvolucionada
-
-def convolucion():
-    global imagen_inicio
-    kn= np.ones((7,7))
-    kn /= np.sum(kn)
-    print(kn)
-    imagenConvolucionada = convolucionar(imagen_inicio, kn)
-    ax2.clear()  # Limpiar el contenido anterior de la figura
-    ax2.imshow(imagenConvolucionada,"gray")  # Mostrar la imagen
-    ax2.axis('off')  # Ocultar los ejes
-    canvas2.draw()**/
 """
+def kernel_bartlett(n):
+  secuencia = np.arange(1,(n+1)//2+1) #Crece
+  secuencia = np.concatenate([secuencia, secuencia[::-1][1:]]) #Decreciente
+  matriz = secuencia * secuencia.reshape(n,1) #Producto vectorial
+  matriz = matriz/np.sum(matriz) #Normalizacion
+  return matriz
+
 def convolucion(img, kn):
     # Obtenemos las dimensiones de la imagen y el kernel por que no se puede operar con tuplas
     img_fila, img_columna,img_canal = img.shape #dimensiones de la imagen
@@ -239,18 +235,15 @@ def convolucion(img, kn):
           for j in range(img_conv_columna):
               #img_conv[i, j, k] = (img[i:i+kn_dim, j:j+kn_dim, k] * kn).sum() #producto elem a elem y luego suma
               img_conv[i, j, k] = np.sum(img_k[i:i+kn_dim, j:j+kn_dim] * kn)
-              print(j)
     img_conv = (img_conv - img_conv.min()) / (img_conv.max() - img_conv.min()) #Sin esto se ve blanco
     return img_conv
 
 def realizarConvolucion():
-    global imagen_inicio, imagen_final
-    kernel = np.array([[1, 2, 1],[2, 4, 2],[1, 2, 1]])/16
-    imagen_final = convolucion(imagen_inicio, kernel)
-    ax2.clear()  # Limpiar el contenido anterior de la figura
-    ax2.imshow(imagen_final)  # Mostrar la imagen
-    ax2.axis('off')  # Ocultar los ejes
-    canvas2.draw()  # Dibujar la imagen en el canvas de Matplotlib
+    global imagen_inicio
+    kernel = kernel_bartlett(7)
+    Img_convol = convolucion(imagen_inicio, kernel)
+    Img_convol = (Img_convol * 255).astype(np.uint8)
+    pintar2Canvas(Img_convol)
 
 def resta_promediada_yiq():
     global imagen_inicio
