@@ -204,46 +204,7 @@ def suma_promediada_yiq():
         # Mostrar la imagen en el canvas derecho utilizando Matplotlib
         sumaImg = (yiq2rgb(yiq) * 255).astype(np.uint8)
         pintar2Canvas(sumaImg)
-"""
-def convolucionar(img, kernel):
-    imgConvolucionada = np.zeros((np.array(img.shape) - np.array(kernel.shape)+1))
-    for x in range(imgConvolucionada.shape[0]):
-        for y in range(imgConvolucionada.shape[1]):
-            imgConvolucionada[x,y] = (img[x:x+kernel.shape[0],y:y+kernel.shape[1]]*kernel).sum() 
-    return imgConvolucionada
-"""
-def kernel_bartlett(n):
-  secuencia = np.arange(1,(n+1)//2+1) #Crece
-  secuencia = np.concatenate([secuencia, secuencia[::-1][1:]]) #Decreciente
-  matriz = secuencia * secuencia.reshape(n,1) #Producto vectorial
-  matriz = matriz/np.sum(matriz) #Normalizacion
-  return matriz
 
-def convolucion(img, kn):
-    # Obtenemos las dimensiones de la imagen y el kernel por que no se puede operar con tuplas
-    img_fila, img_columna,img_canal = img.shape #dimensiones de la imagen
-    kn_dim = kn.shape[0]
-    # Calculamos las dimensiones de la imagen transformada
-    img_conv_fila = img_fila - kn_dim + 1
-    img_conv_columna = img_columna - kn_dim + 1
-    # Inicializamos la matriz de salida
-    img_conv = np.zeros((img_conv_fila, img_conv_columna, img_canal))
-    # Realizamos la convolución
-    for k in range(img_canal):
-      img_k = img[:,:,k]
-      for i in range(img_conv_fila):
-          for j in range(img_conv_columna):
-              #img_conv[i, j, k] = (img[i:i+kn_dim, j:j+kn_dim, k] * kn).sum() #producto elem a elem y luego suma
-              img_conv[i, j, k] = np.sum(img_k[i:i+kn_dim, j:j+kn_dim] * kn)
-    img_conv = (img_conv - img_conv.min()) / (img_conv.max() - img_conv.min()) #Sin esto se ve blanco
-    return img_conv
-
-def realizarConvolucion():
-    global imagen_inicio
-    kernel = kernel_bartlett(7)
-    Img_convol = convolucion(imagen_inicio, kernel)
-    Img_convol = (Img_convol * 255).astype(np.uint8)
-    pintar2Canvas(Img_convol)
 
 def resta_promediada_yiq():
     global imagen_inicio
@@ -259,6 +220,51 @@ def resta_promediada_yiq():
         # Mostrar la imagen en el canvas derecho utilizando Matplotlib
         sumaImg = sumaImg = (yiq2rgb(yiq) * 255).astype(np.uint8)
         pintar2Canvas(sumaImg)
+"""
+def convolucionar(img, kernel):
+    imgConvolucionada = np.zeros((np.array(img.shape) - np.array(kernel.shape)+1))
+    for x in range(imgConvolucionada.shape[0]):
+        for y in range(imgConvolucionada.shape[1]):
+            imgConvolucionada[x,y] = (img[x:x+kernel.shape[0],y:y+kernel.shape[1]]*kernel).sum() 
+    return imgConvolucionada
+"""
+
+
+def realizarConvolucionBarlett():
+    global imagen_inicio
+    kernel = mf.kernel_bartlett(5)
+    Img_convol = mf.convolucion(rgb2yiq(imagen_inicio), kernel)
+    Img_convol = (yiq2rgb(Img_convol) * 255).astype(np.uint8)
+    pintar2Canvas(Img_convol)
+
+def realizarConvolucionPascal():
+    global imagen_inicio
+    kernel = mf.pascal(7)
+    Img_convol = mf.convolucion(rgb2yiq(imagen_inicio), kernel)
+    Img_convol = (yiq2rgb(Img_convol) * 255).astype(np.uint8)
+    pintar2Canvas(Img_convol)
+
+
+def realizarConvolucionGauss():
+    global imagen_inicio
+    kernel = mf.gauss(5,2)
+    Img_convol = mf.convolucion(rgb2yiq(imagen_inicio), kernel)
+    Img_convol = (yiq2rgb(Img_convol) * 255).astype(np.uint8)
+    pintar2Canvas(Img_convol)
+
+def realizarConvolucionLaplace():
+    global imagen_inicio
+    kernel = mf.laplace(4)
+    Img_convol = mf.convolucion(rgb2yiq(imagen_inicio), kernel)
+    Img_convol = (yiq2rgb(Img_convol) * 255).astype(np.uint8)
+    pintar2Canvas(Img_convol)
+
+def realizarConvolucionDog():
+    global imagen_inicio
+    kernel = mf.dog(7)
+    Img_convol = mf.convolucion(rgb2yiq(imagen_inicio), kernel)
+    Img_convol = (yiq2rgb(Img_convol) * 255).astype(np.uint8)
+    pintar2Canvas(Img_convol)
 
 def ejecutar_opcion():
     funcion_seleccionada = operaciones[opcion.get()]
@@ -285,16 +291,11 @@ def guardar_imagen():
 operaciones = {
     "   Transformar a YIQ ": transformar_a_yiq,
     "   Transformar a RGB ": transformar_a_rgb,
-    "   Manipular Y o IQ  ": cambiarLuminanciaSaturacion,
-    " Suma clampeada RGB  ": cuasi_suma_clampeada,
-    " Suma promediada RGB ":cuasi_suma_promediada,
-    " Resta clampeada RGB ": cuasi_resta_clampeada,
-    " Resta promediada RGB":cuasi_resta_promediada,
-    " Suma clampeada YIQ  ":suma_clampeada_yiq,
-    " Resta clampeada YIQ ":resta_clampeada_yiq,
-    " Suma promediada YIQ ":suma_promediada_yiq,
-    " Resta promediada YIQ":resta_promediada_yiq,
-    " Convolucion ": realizarConvolucion
+    " Convolucion Barlett 5x5": realizarConvolucionBarlett,
+    " Convolucion Pascal 7x7": realizarConvolucionPascal,
+    " Convolucion Gauss ": realizarConvolucionGauss,
+    " Convolucion Laplace 4x4": realizarConvolucionLaplace,
+    " Convolucion Dog ": realizarConvolucionDog
 }
 # Variable para almacenar la opción seleccionada
 opcion = tk.StringVar()
