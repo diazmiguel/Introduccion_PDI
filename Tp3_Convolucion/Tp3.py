@@ -34,22 +34,6 @@ imagen_inicio = None # imagen que mostrara al principio
 imagen_final = None # imagen que mostrara al final
 
 #FUNCIONES PARA TRABAJAR CON ELLAS (Deberia modularizarse)
-def rgb2yiq(imagen):
-    imagen = np.clip(imagen/255.,0.,1.) # imagen = imagen/255.
-    #print("rgb2yiq: ",imagen.shape,imagen.dtype, "tamaño: ", imagen.min(),imagen.max())
-    yiq= np.zeros(imagen.shape)
-    yiq[:,:,0] = np.clip(0.299 * imagen[:,:,0] + 0.587 * imagen[:,:,1] + 0.114 * imagen[:,:,2], 0., 1.)
-    yiq[:,:,1] = np.clip(0.595716 * imagen[:,:,0] - 0.274453 * imagen[:,:,1] - 0.321263 * imagen[:,:,2], -0.5957, 0.5957)
-    yiq[:,:,2] = np.clip(0.211456 * imagen[:,:,0] - 0.522591 * imagen[:,:,1] + 0.311135 * imagen[:,:,2], -0.5226, 0.5226)
-    return yiq
-
-def yiq2rgb(imagen):
-    #imagen = np.clip(imagen/255.,0.,1.)
-    rgb = np.zeros(imagen.shape)
-    rgb[:,:,0] = np.clip(imagen[:,:,0] + 0.9663 * imagen[:,:,1] + 0.6210 * imagen[:,:,2], 0., 1.)
-    rgb[:,:,1] = np.clip(imagen[:,:,0] - 0.2721 * imagen[:,:,1] - 0.6474 * imagen[:,:,2], 0., 1.)
-    rgb[:,:,2] = np.clip(imagen[:,:,0] - 1.1070 * imagen[:,:,1] + 1.7046 * imagen[:,:,2], 0., 1.)
-    return rgb
 
 # FUNCIONES DE INTERFAZ (Tambien deberia modularizarse)
 def abrir_imagen():
@@ -62,55 +46,6 @@ def abrir_imagen():
         ax1.imshow(imagen_inicio)  # Mostrar la imagen
         ax1.axis('off')  # Ocultar los ejes
         canvas1.draw()  # Dibujar la imagen en el canvas de Matplotlib
-
-# Función para transformar la imagen de RGB a YIQ
-def transformar_a_yiq():
-    global imagen_inicio, imagen_final
-    if imagen_inicio is not None:
-        # Transformar la imagen
-        luminancia = simpledialog.askfloat("Entrada", "Ingrese el valor de luminancia:") 
-        saturacion = simpledialog.askfloat("Entrada", "Ingrese el valor de saturacion:")
-        yiq = rgb2yiq(imagen_inicio)
-        yiq[:,:,0] *=luminancia
-        yiq[:,:,1] *=saturacion
-        yiq[:,:,2] *=saturacion
-        yiq_normalized = (yiq - yiq.min()) / (yiq.max() - yiq.min())
-        imagen_final = (yiq_normalized * 255).astype(np.uint8)
-        # Mostrar la imagen en el canvas derecho utilizando Matplotlib
-        ax2.clear()  # Limpiar el contenido anterior de la figura
-        ax2.imshow(imagen_final)  # Mostrar la imagen
-        ax2.axis('off')  # Ocultar los ejes
-        canvas2.draw()  # Dibujar la imagen en el canvas de Matplotlib
-
-def transformar_a_rgb():
-    global imagen_inicio, imagen_final
-    if imagen_inicio is not None:
-        # Transformar la imagen Aqui
-        rgb = yiq2rgb(imagen_inicio/255.)
-        imagen_final = (rgb * 255).astype(np.uint8)
-        #print(imagen_final.dtype)
-        ax2.clear()  # Limpiar el contenido anterior de la figura
-        ax2.imshow(imagen_final)  # Mostrar la imagen
-        ax2.axis('off')  # Ocultar los ejes
-        canvas2.draw()  # Dibujar la imagen en el canvas de Matplotlib
-
-
-def cambiarLuminanciaSaturacion():
-    global imagen_inicio, imagen_final
-    if imagen_inicio is not None:
-        # Transformar la imagen
-        luminancia = simpledialog.askfloat("Entrada", "Ingrese el valor de luminancia:") 
-        saturacion = simpledialog.askfloat("Entrada", "Ingrese el valor de saturacion:")
-        yiq = rgb2yiq(imagen_inicio)
-        yiq[:,:,0] *=luminancia
-        yiq[:,:,1] *=saturacion
-        yiq[:,:,2] *=saturacion
-        imagen_final = (yiq2rgb(yiq) * 255).astype(np.uint8)
-        # Mostrar la imagen en el canvas derecho utilizando Matplotlib
-        ax2.clear()  # Limpiar el contenido anterior de la figura
-        ax2.imshow(imagen_final)  # Mostrar la imagen
-        ax2.axis('off')  # Ocultar los ejes
-        canvas2.draw()  # Dibujar la imagen en el canvas de Matplotlib
 
 def cargar2daImagen():
     ruta = filedialog.askopenfilename(defaultextension=".png", filetypes=[("Image files", "*.png ; *.bmp ; *.jpg")])
@@ -125,6 +60,41 @@ def pintar2Canvas(img):
     ax2.imshow(imagen_final);  # Mostrar la imagen
     ax2.axis('off');  # Ocultar los ejes
     canvas2.draw();  # Dibujar la imagen en el canvas de Matplotlib
+
+# Función para transformar la imagen de RGB a YIQ
+def transformar_a_yiq():
+    global imagen_inicio
+    if imagen_inicio is not None:
+        # Transformar la imagen
+        luminancia = simpledialog.askfloat("Entrada", "Ingrese el valor de luminancia:") 
+        saturacion = simpledialog.askfloat("Entrada", "Ingrese el valor de saturacion:")
+        yiq = mf.rgb2yiq(imagen_inicio)
+        yiq[:,:,0] *=luminancia
+        yiq[:,:,1] *=saturacion
+        yiq[:,:,2] *=saturacion
+        yiq_normalized = (yiq - yiq.min()) / (yiq.max() - yiq.min())
+        pintar2Canvas((yiq_normalized * 255).astype(np.uint8))
+
+def transformar_a_rgb():
+    global imagen_inicio
+    if imagen_inicio is not None:
+        # Transformar la imagen Aqui
+        rgb = mf.yiq2rgb(imagen_inicio/255.)
+        pintar2Canvas((rgb * 255).astype(np.uint8))
+
+
+def cambiarLuminanciaSaturacion(): #Te cambia la luminosidad, saturacion transformando en el canal yiq
+    global imagen_inicio
+    if imagen_inicio is not None:
+        # Transformar la imagen
+        luminancia = simpledialog.askfloat("Entrada", "Ingrese el valor de luminancia:") 
+        saturacion = simpledialog.askfloat("Entrada", "Ingrese el valor de saturacion:")
+        yiq = mf.rgb2yiq(imagen_inicio)
+        yiq[:,:,0] *=luminancia
+        yiq[:,:,1] *=saturacion
+        yiq[:,:,2] *=saturacion
+        pintar2Canvas((mf.yiq2rgb(yiq) * 255).astype(np.uint8))
+        
 
 def cuasi_suma_clampeada():
     global imagen_inicio
@@ -165,14 +135,14 @@ def suma_clampeada_yiq():
     img2 = cargar2daImagen()
     if img2 is not None:
         #Obtenemos YIQ
-        img1 = rgb2yiq(imagen_inicio)
-        img2 = rgb2yiq(img2)
+        img1 = mf.rgb2yiq(imagen_inicio)
+        img2 = mf.rgb2yiq(img2)
         yiq= np.zeros(img1.shape)
         yiq[:,:,0] = np.clip(img1[:,:,0]+img2[:,:,0], 0.,1.)# YA + YB; If YC > 1 then YC:=1
         yiq[:,:,1] = (img1[:,:,0]*img1[:,:,1] + img2[:,:,0]*img2[:,:,1]) / (img1[:,:,0]+img2[:,:,0]) #(YA * IA + YB * IB) / (YA + YB)
         yiq[:,:,2] = (img1[:,:,0]*img1[:,:,2] + img2[:,:,0]*img2[:,:,2]) / (img1[:,:,0]+img2[:,:,0])  #(YA * QA + YB * QB) / (YA + YB)
         # Mostrar la imagen en el canvas derecho utilizando Matplotlib
-        sumaImg = (yiq2rgb(yiq) * 255).astype(np.uint8)
+        sumaImg = (mf.yiq2rgb(yiq) * 255).astype(np.uint8)
         pintar2Canvas(sumaImg)
 
 def resta_clampeada_yiq():
@@ -180,14 +150,14 @@ def resta_clampeada_yiq():
     img2 = cargar2daImagen()
     if img2 is not None:
         #Obtenemos YIQ
-        img1 = rgb2yiq(imagen_inicio)
-        img2 = rgb2yiq(img2)
+        img1 = mf.rgb2yiq(imagen_inicio)
+        img2 = mf.rgb2yiq(img2)
         yiq= np.zeros(img1.shape)
         yiq[:,:,0] = np.clip(img1[:,:,0]-img2[:,:,0], 0.,1.)# YA - YB; If YC > 1 then YC:=1
         yiq[:,:,1] = (img1[:,:,0]*img1[:,:,1] - img2[:,:,0]*img2[:,:,1]) / (img1[:,:,0]+img2[:,:,0]) #(YA * IA - YB * IB) / (YA + YB)
         yiq[:,:,2] = (img1[:,:,0]*img1[:,:,2] - img2[:,:,0]*img2[:,:,2]) / (img1[:,:,0]+img2[:,:,0])  #(YA * QA - YB * QB) / (YA + YB)
         # Mostrar la imagen en el canvas derecho utilizando Matplotlib
-        sumaImg = sumaImg = (yiq2rgb(yiq) * 255).astype(np.uint8)
+        sumaImg = sumaImg = (mf.yiq2rgb(yiq) * 255).astype(np.uint8)
         pintar2Canvas(sumaImg)
 
 def suma_promediada_yiq():
@@ -195,14 +165,14 @@ def suma_promediada_yiq():
     img2 = cargar2daImagen()
     if img2 is not None:
         #Obtenemos YIQ
-        img1 = rgb2yiq(imagen_inicio)
-        img2 = rgb2yiq(img2)
+        img1 = mf.rgb2yiq(imagen_inicio)
+        img2 = mf.rgb2yiq(img2)
         yiq= np.zeros(img1.shape)
         yiq[:,:,0] = np.clip((img1[:,:,0]+img2[:,:,0])/2, 0.,1.)# YA + YB; If YC > 1 then YC:=1
         yiq[:,:,1] = (img1[:,:,0]*img1[:,:,1] + img2[:,:,0]*img2[:,:,1]) / (img1[:,:,0]+img2[:,:,0]) #(YA * IA + YB * IB) / (YA + YB)
         yiq[:,:,2] = (img1[:,:,0]*img1[:,:,2] + img2[:,:,0]*img2[:,:,2]) / (img1[:,:,0]+img2[:,:,0])  #(YA * QA + YB * QB) / (YA + YB)
         # Mostrar la imagen en el canvas derecho utilizando Matplotlib
-        sumaImg = (yiq2rgb(yiq) * 255).astype(np.uint8)
+        sumaImg = (mf.yiq2rgb(yiq) * 255).astype(np.uint8)
         pintar2Canvas(sumaImg)
 
 
@@ -211,14 +181,14 @@ def resta_promediada_yiq():
     img2 = cargar2daImagen()
     if img2 is not None:
         #Obtenemos YIQ
-        img1 = rgb2yiq(imagen_inicio)
-        img2 = rgb2yiq(img2)
+        img1 = mf.rgb2yiq(imagen_inicio)
+        img2 = mf.rgb2yiq(img2)
         yiq= np.zeros(img1.shape)
         yiq[:,:,0] = np.clip((img1[:,:,0]-img2[:,:,0])/2, 0.,1.)# YA - YB; If YC > 1 then YC:=1
         yiq[:,:,1] = (img1[:,:,0]*img1[:,:,1] - img2[:,:,0]*img2[:,:,1]) / (img1[:,:,0]+img2[:,:,0]) #(YA * IA - YB * IB) / (YA + YB)
         yiq[:,:,2] = (img1[:,:,0]*img1[:,:,2] - img2[:,:,0]*img2[:,:,2]) / (img1[:,:,0]+img2[:,:,0])  #(YA * QA - YB * QB) / (YA + YB)
         # Mostrar la imagen en el canvas derecho utilizando Matplotlib
-        sumaImg = sumaImg = (yiq2rgb(yiq) * 255).astype(np.uint8)
+        sumaImg = sumaImg = (mf.yiq2rgb(yiq) * 255).astype(np.uint8)
         pintar2Canvas(sumaImg)
 """
 def convolucionar(img, kernel):
@@ -229,41 +199,40 @@ def convolucionar(img, kernel):
     return imgConvolucionada
 """
 
-
 def realizarConvolucionBarlett():
     global imagen_inicio
     kernel = mf.kernel_bartlett(5)
-    Img_convol = mf.convolucion(rgb2yiq(imagen_inicio), kernel)
-    Img_convol = (yiq2rgb(Img_convol) * 255).astype(np.uint8)
+    Img_convol = mf.convolucion(mf.rgb2yiq(imagen_inicio), kernel)
+    Img_convol = (mf.yiq2rgb(Img_convol) * 255).astype(np.uint8)
     pintar2Canvas(Img_convol)
 
 def realizarConvolucionPascal():
     global imagen_inicio
     kernel = mf.pascal(7)
-    Img_convol = mf.convolucion(rgb2yiq(imagen_inicio), kernel)
-    Img_convol = (yiq2rgb(Img_convol) * 255).astype(np.uint8)
+    Img_convol = mf.convolucion(mf.rgb2yiq(imagen_inicio), kernel)
+    Img_convol = (mf.yiq2rgb(Img_convol) * 255).astype(np.uint8)
     pintar2Canvas(Img_convol)
 
 
 def realizarConvolucionGauss():
     global imagen_inicio
     kernel = mf.gauss(5,2)
-    Img_convol = mf.convolucion(rgb2yiq(imagen_inicio), kernel)
-    Img_convol = (yiq2rgb(Img_convol) * 255).astype(np.uint8)
+    Img_convol = mf.convolucion(mf.rgb2yiq(imagen_inicio), kernel)
+    Img_convol = (mf.yiq2rgb(Img_convol) * 255).astype(np.uint8)
     pintar2Canvas(Img_convol)
 
 def realizarConvolucionLaplace():
     global imagen_inicio
     kernel = mf.laplace(4)
-    Img_convol = mf.convolucion(rgb2yiq(imagen_inicio), kernel)
-    Img_convol = (yiq2rgb(Img_convol) * 255).astype(np.uint8)
+    Img_convol = mf.convolucion(mf.rgb2yiq(imagen_inicio), kernel)
+    Img_convol = (mf.yiq2rgb(Img_convol) * 255).astype(np.uint8)
     pintar2Canvas(Img_convol)
 
 def realizarConvolucionDog():
     global imagen_inicio
-    kernel = mf.dog(7)
-    Img_convol = mf.convolucion(rgb2yiq(imagen_inicio), kernel)
-    Img_convol = (yiq2rgb(Img_convol) * 255).astype(np.uint8)
+    kernel = mf.dog(9)
+    Img_convol = mf.convolucion(mf.rgb2yiq(imagen_inicio), kernel)
+    Img_convol = (mf.yiq2rgb(Img_convol) * 255).astype(np.uint8)
     pintar2Canvas(Img_convol)
 
 def ejecutar_opcion():
@@ -291,6 +260,7 @@ def guardar_imagen():
 operaciones = {
     "   Transformar a YIQ ": transformar_a_yiq,
     "   Transformar a RGB ": transformar_a_rgb,
+    " Cambiar Luminancia/Saturacion": cambiarLuminanciaSaturacion,
     " Convolucion Barlett 5x5": realizarConvolucionBarlett,
     " Convolucion Pascal 7x7": realizarConvolucionPascal,
     " Convolucion Gauss ": realizarConvolucionGauss,

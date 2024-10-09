@@ -1,5 +1,22 @@
 #En proceso :)
 import numpy as np
+#FUNCIONES DE TRANSFORMACION
+def rgb2yiq(imagen):
+    imagen = np.clip(imagen/255.,0.,1.) # imagen = imagen/255.
+    #print("rgb2yiq: ",imagen.shape,imagen.dtype, "tamaño: ", imagen.min(),imagen.max())
+    yiq= np.zeros(imagen.shape)
+    yiq[:,:,0] = np.clip(0.299 * imagen[:,:,0] + 0.587 * imagen[:,:,1] + 0.114 * imagen[:,:,2], 0., 1.)
+    yiq[:,:,1] = np.clip(0.595716 * imagen[:,:,0] - 0.274453 * imagen[:,:,1] - 0.321263 * imagen[:,:,2], -0.5957, 0.5957)
+    yiq[:,:,2] = np.clip(0.211456 * imagen[:,:,0] - 0.522591 * imagen[:,:,1] + 0.311135 * imagen[:,:,2], -0.5226, 0.5226)
+    return yiq
+
+def yiq2rgb(imagen):
+    #imagen = np.clip(imagen/255.,0.,1.)
+    rgb = np.zeros(imagen.shape)
+    rgb[:,:,0] = np.clip(imagen[:,:,0] + 0.9663 * imagen[:,:,1] + 0.6210 * imagen[:,:,2], 0., 1.)
+    rgb[:,:,1] = np.clip(imagen[:,:,0] - 0.2721 * imagen[:,:,1] - 0.6474 * imagen[:,:,2], 0., 1.)
+    rgb[:,:,2] = np.clip(imagen[:,:,0] - 1.1070 * imagen[:,:,1] + 1.7046 * imagen[:,:,2], 0., 1.)
+    return rgb
 
 #FUNCIONES DE CONVOLUCION
 def convolucion(img, kn):
