@@ -190,50 +190,49 @@ def resta_promediada_yiq():
         # Mostrar la imagen en el canvas derecho utilizando Matplotlib
         sumaImg = sumaImg = (mf.yiq2rgb(yiq) * 255).astype(np.uint8)
         pintar2Canvas(sumaImg)
-"""
-def convolucionar(img, kernel):
-    imgConvolucionada = np.zeros((np.array(img.shape) - np.array(kernel.shape)+1))
-    for x in range(imgConvolucionada.shape[0]):
-        for y in range(imgConvolucionada.shape[1]):
-            imgConvolucionada[x,y] = (img[x:x+kernel.shape[0],y:y+kernel.shape[1]]*kernel).sum() 
-    return imgConvolucionada
-"""
 
-def realizarConvolucionBarlett():
+#Plano
+def realizarConvolucionPlano():
     global imagen_inicio
-    kernel = mf.kernel_bartlett(5)
-    Img_convol = mf.convolucion(mf.rgb2yiq(imagen_inicio), kernel)
-    Img_convol = (mf.yiq2rgb(Img_convol) * 255).astype(np.uint8)
-    pintar2Canvas(Img_convol)
-
-def realizarConvolucionPascal():
+    pintar2Canvas(mf.realizarConvolucion(imagen_inicio, mf.kernel_plano(3)))
+#Barlett
+def realizarConvolucionBarlett3():
     global imagen_inicio
-    kernel = mf.pascal(7)
-    Img_convol = mf.convolucion(mf.rgb2yiq(imagen_inicio), kernel)
-    Img_convol = (mf.yiq2rgb(Img_convol) * 255).astype(np.uint8)
-    pintar2Canvas(Img_convol)
-
-
-def realizarConvolucionGauss():
+    pintar2Canvas(mf.realizarConvolucion(imagen_inicio, mf.kernel_bartlett(3)))
+def realizarConvolucionBarlett5():
     global imagen_inicio
-    kernel = mf.gauss(5,2)
-    Img_convol = mf.convolucion(mf.rgb2yiq(imagen_inicio), kernel)
-    Img_convol = (mf.yiq2rgb(Img_convol) * 255).astype(np.uint8)
-    pintar2Canvas(Img_convol)
-
-def realizarConvolucionLaplace():
+    pintar2Canvas(mf.realizarConvolucion(imagen_inicio, mf.kernel_bartlett(5)))
+def realizarConvolucionBarlett7():
     global imagen_inicio
-    kernel = mf.laplace(4)
-    Img_convol = mf.convolucion(mf.rgb2yiq(imagen_inicio), kernel)
-    Img_convol = (mf.yiq2rgb(Img_convol) * 255).astype(np.uint8)
-    pintar2Canvas(Img_convol)
+    pintar2Canvas(mf.realizarConvolucion(imagen_inicio, mf.kernel_bartlett(7)))
 
+#Gauss
+def realizarConvolucionGauss5():
+    global imagen_inicio
+    pintar2Canvas(mf.realizarConvolucion(imagen_inicio, mf.gauss(5,2)))
+def realizarConvolucionGauss7():
+    global imagen_inicio
+    pintar2Canvas(mf.realizarConvolucion(imagen_inicio, mf.gauss(7,2)))
+#Laplace
+def realizarConvolucionLaplace4():
+    global imagen_inicio
+    pintar2Canvas(mf.realizarConvolucion(imagen_inicio, mf.laplace(4)))
+def realizarConvolucionLaplace8():
+    global imagen_inicio
+    pintar2Canvas(mf.realizarConvolucion(imagen_inicio, mf.laplace(8)))
+#Direccional
+def realizarConvolucionDireccional():
+    global imagen_inicio
+    direccion = simpledialog.askstring("Entrada","Ingrese Direccion [n,s,e,o,ne,no,se,so]:") 
+    pintar2Canvas(mf.realizarConvolucion(imagen_inicio, mf.sobel(direccion)))
+#Dog
 def realizarConvolucionDog():
     global imagen_inicio
-    kernel = mf.dog(9)
-    Img_convol = mf.convolucion(mf.rgb2yiq(imagen_inicio), kernel)
-    Img_convol = (mf.yiq2rgb(Img_convol) * 255).astype(np.uint8)
-    pintar2Canvas(Img_convol)
+    pintar2Canvas(mf.realizarConvolucion(imagen_inicio, mf.dog(5)))
+#PasaAlto
+def realizarPasaAlto():
+    global imagen_inicio
+    pintar2Canvas(mf.realizarConvolucion(imagen_inicio, mf.high_pass(mf.gauss(5, 1))))
 
 def ejecutar_opcion():
     funcion_seleccionada = operaciones[opcion.get()]
@@ -258,18 +257,21 @@ def guardar_imagen():
             
 # Diccionario de funciones
 operaciones = {
-    "   Transformar a YIQ ": transformar_a_yiq,
-    "   Transformar a RGB ": transformar_a_rgb,
-    " Cambiar Luminancia/Saturacion": cambiarLuminanciaSaturacion,
-    " Convolucion Barlett 5x5": realizarConvolucionBarlett,
-    " Convolucion Pascal 7x7": realizarConvolucionPascal,
-    " Convolucion Gauss ": realizarConvolucionGauss,
-    " Convolucion Laplace 4x4": realizarConvolucionLaplace,
-    " Convolucion Dog ": realizarConvolucionDog
+    " Convolucion Plano ": realizarConvolucionPlano,
+    " Convolucion Barlett 3x3": realizarConvolucionBarlett3,
+    " Convolucion Barlett 5x5": realizarConvolucionBarlett5,
+    " Convolucion Barlett 7x7": realizarConvolucionBarlett7,
+    " Convolucion Gauss 5x5 ": realizarConvolucionGauss5,
+    " Convolucion Gauss 7x7 ": realizarConvolucionGauss7,
+    " Convolucion Laplace 4x4": realizarConvolucionLaplace4,
+    " Convolucion Laplace 8x8": realizarConvolucionLaplace8,
+    " Convolucion Direccional": realizarConvolucionDireccional,
+    " Convolucion Dog ": realizarConvolucionDog,
+    " Convolucion PasaAlto ": realizarPasaAlto
 }
 # Variable para almacenar la opción seleccionada
 opcion = tk.StringVar()
-opcion.set("   Transformar a YIQ ")  # Valor inicial
+opcion.set(" Convolucion Plano ")  # Valor inicial
 
 # Crear botones 
 boton_abrir = tk.Button(ventana, text="Abrir ", command= abrir_imagen, bg="#1dd767", font=("Roboto", 11))
@@ -280,14 +282,14 @@ menu_opciones = tk.OptionMenu(ventana, opcion, *operaciones.keys())
 menu_opciones.place(x=300, y=500)
 
 boton_guardar = tk.Button(ventana, text="Guardar", command=guardar_imagen, bg="#1dd767",font=("Roboto", 11))
-boton_guardar.place(x=500, y=500)
+boton_guardar.place(x=550, y=500)
 
 boton_volver = tk.Button(ventana, text="Volver", command=volver, bg="#1dd767",font=("Roboto", 11))
 boton_volver.place(x=200, y=550)
 
 # Crear el botón y vincularlo a la función de solicitud de datos
 boton_ejecutar = tk.Button(ventana, text="Ejecutar Operación", command=ejecutar_opcion, bg="#1dd767", font=("Roboto", 11))
-boton_ejecutar.place(x=500, y=550)
+boton_ejecutar.place(x=550, y=550)
 
 # Iniciar el loop de la ventana
 ventana.mainloop()
