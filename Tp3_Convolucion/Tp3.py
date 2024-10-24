@@ -57,7 +57,7 @@ def pintar2Canvas(img):
     global imagen_final
     imagen_final = img
     ax2.clear();  # Limpiar el contenido anterior de la figura
-    ax2.imshow(imagen_final);  # Mostrar la imagen
+    ax2.imshow(imagen_final[:,:,0],"gray");  # Mostrar la imagen
     ax2.axis('off');  # Ocultar los ejes
     canvas2.draw();  # Dibujar la imagen en el canvas de Matplotlib
 
