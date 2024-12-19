@@ -50,7 +50,7 @@ class Interface:
         self.coords2 = None
 
     def update_param(self, avg_time, cant_person):
-        self.tiempo_label.config(text=f"Tiempo Prom.(Area1): {avg_time}")
+        self.tiempo_label.config(text=f"Tiempo Prom.(Area1): {avg_time:.2f}")
         self.personas_label.config(text=f"Cant. Personas (Area2): {cant_person}")
 
 

@@ -1,12 +1,8 @@
-# Monitoreo con YoloV8
+# IPDIYoloV8
 
-Proyecto corresponde a IPDI que consiste en el monitoreo inteligente de cajeros usando la red de Yolov8.
-
-Antes de ejecutar asegurate de tener python y pip
-
+Asegurate de tener 
 Para correr el programa debes seguir las siguientes instrucciones:
-
-
+Es necesario python y pip
 ```sh
 git clone
 source env/bin/activate
